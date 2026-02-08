@@ -1,0 +1,94 @@
+#!/system/bin/sh
+
+# WiFi Monitoring Script (inotifyd handler)
+# Monitors /data/misc/net for network changes
+# Triggered by inotifyd when network routing tables change
+
+events=$1
+# monitor_dir=$2
+# monitor_file=$3
+
+scripts=$(realpath "$0")
+scripts_dir=$(dirname "$scripts")
+
+source "$scripts_dir/dhcpv6.config"
+
+log() {
+  echo "$(date '+%Y-%m-%d %H:%M:%S') [WiFi] $1" >> "$log_file"
+}
+
+# Check if WiFi is connected
+is_wifi_connected() {
+  if [ -f "/sys/class/net/$wifi_interface/carrier" ]; then
+    local carrier=$(cat "/sys/class/net/$wifi_interface/carrier" 2>/dev/null)
+    [ "$carrier" = "1" ] && return 0
+  fi
+  
+  if [ -f "/sys/class/net/$wifi_interface/operstate" ]; then
+    local state=$(cat "/sys/class/net/$wifi_interface/operstate" 2>/dev/null)
+    [ "$state" = "up" ] && return 0
+  fi
+  
+  return 1
+}
+
+# Check if dhcp6c is running
+is_dhcp6c_running() {
+  if [ -f "$pid_file" ]; then
+    local pid=$(cat "$pid_file")
+    [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null && return 0
+  fi
+  return 1
+}
+
+# Debounce: avoid rapid restarts
+last_trigger_file="$run_dir/.last_wifi_trigger"
+debounce_check() {
+  local now=$(date +%s)
+  local last=0
+  
+  if [ -f "$last_trigger_file" ]; then
+    last=$(cat "$last_trigger_file")
+  fi
+  
+  local diff=$((now - last))
+  
+  # Ignore triggers within 5 seconds
+  if [ "$diff" -lt 5 ]; then
+    return 1
+  fi
+  
+  echo "$now" > "$last_trigger_file"
+  return 0
+}
+
+# Main handler
+handle_event() {
+  mkdir -p "$run_dir"
+  
+  # Only handle write events
+  if [ "$events" != "w" ]; then
+    return
+  fi
+  
+  # Debounce removed to allow rapid reconnection handling
+  # if ! debounce_check; then
+  #   return
+  # fi
+  
+  if is_wifi_connected; then
+    log "WiFi connected/changed, triggering DHCPv6"
+    
+    # Restart dhcp6c to get new address
+    "$scripts_dir/start.sh" >> "$log_file" 2>&1
+  else
+    log "WiFi disconnected"
+    
+    # Stop dhcp6c when WiFi disconnects
+    if is_dhcp6c_running; then
+      "$scripts_dir/stop.sh" >> "$log_file" 2>&1
+    fi
+  fi
+}
+
+handle_event

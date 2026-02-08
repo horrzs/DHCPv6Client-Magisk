@@ -1,0 +1,36 @@
+#!/system/bin/sh
+
+# Module Enable/Disable Handler (inotifyd handler)
+# Monitors module directory for disable file changes
+
+events=$1
+monitor_dir=$2
+monitor_file=$3
+
+scripts=$(realpath "$0")
+scripts_dir=$(dirname "$scripts")
+
+source "$scripts_dir/dhcpv6.config"
+
+log() {
+  echo "$(date '+%Y-%m-%d %H:%M:%S') [Module] $1" >> "$log_file"
+}
+
+module_dir="/data/adb/modules/dhcpv6"
+
+# Check for Magisk Lite
+[ -n "$(magisk -v 2>/dev/null | grep lite)" ] && module_dir=/data/adb/lite_modules/dhcpv6
+
+handle_event() {
+  mkdir -p "$run_dir"
+  
+  if [ -f "$module_dir/disable" ]; then
+    log "Module disabled, stopping DHCPv6"
+    "$scripts_dir/stop.sh" >> "$log_file" 2>&1
+  else
+    log "Module enabled, starting DHCPv6"
+    "$scripts_dir/start.sh" >> "$log_file" 2>&1
+  fi
+}
+
+handle_event

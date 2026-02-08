@@ -1,0 +1,6 @@
+id=dhcpv6
+name=DHCPv6 Client
+version=v0.0.1
+versionCode=20260208
+author=horrzs
+description=Obtain stateful IPv6 addresses via DHCPv6 when connecting to WiFi
