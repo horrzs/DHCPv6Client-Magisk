@@ -65,3 +65,14 @@ ip -6 addr show wlan0
 
 - **作者**：horrzs
 - **基于**：[wide-dhcpv6 开源项目](https://github.com/Mygod/wide-dhcpv6)、[DHCPv6-Client-Android](https://github.com/Mygod/DHCPv6-Client-Android)
+
+
+## Star History
+
+<a href="https://www.star-history.com/#horrzs/DHCPv6Client-Magisk&type=date&legend=top-left">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=horrzs/DHCPv6Client-Magisk&type=date&theme=dark&legend=top-left" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=horrzs/DHCPv6Client-Magisk&type=date&legend=top-left" />
+   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=horrzs/DHCPv6Client-Magisk&type=date&legend=top-left" />
+ </picture>
+</a>
